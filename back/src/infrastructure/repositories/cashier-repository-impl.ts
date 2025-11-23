@@ -22,4 +22,8 @@ export class CashierRepositoryImpl implements CashierRepository {
   async findByMerchantId(merchantId: string): Promise<Cashier[]> {
     return await CashierModel.find({ merchantId }).lean()
   }
+
+  async getAll(): Promise<Cashier[]> {
+    return await CashierModel.find().lean()
+  }
 }

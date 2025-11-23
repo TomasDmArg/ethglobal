@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 import {
   createCashierUseCase,
+  getAllCashiersUseCase,
   getCashierByUuidUseCase,
   getCashierDetailsUseCase,
   getCashiersByMerchantUseCase,
@@ -9,6 +10,17 @@ import {
 
 interface ErrorResponse {
   error: string
+}
+
+export async function getCashiers(req: Request, res: Response<ErrorResponse | unknown>): Promise<void> {
+  try {
+    const useCase = getAllCashiersUseCase()
+    const cashiers = await useCase.execute()
+    res.json(cashiers)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    res.status(500).json({ error: message })
+  }
 }
 
 export async function createCashier(req: Request, res: Response): Promise<void> {

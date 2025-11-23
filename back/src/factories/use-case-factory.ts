@@ -1,6 +1,7 @@
 import { ConsolidatePaymentsUseCase } from "../application/use-cases/consolidate-payments-use-cases"
 import { CreateCashierUseCase } from "../application/use-cases/create-cashier-use-case"
 import { CreatePaymentUseCase } from "../application/use-cases/create-payment-use-case"
+import { GetAllCashiersUseCase } from "../application/use-cases/get-all-cashiers-use-case"
 import { GetCashierByUuidUseCase } from "../application/use-cases/get-cashier-by-uuid-use-case"
 import { GetCashierDetailsUseCase } from "../application/use-cases/get-cashier-details-use-case"
 import { GetCashiersByMerchantUseCase } from "../application/use-cases/get-cashiers-by-merchant-use-case"
@@ -65,6 +66,10 @@ export function registerMerchantUseCase(): RegisterMerchant {
 // Cashier use cases
 export function createCashierUseCase(): CreateCashierUseCase {
   return new CreateCashierUseCase(cashierRepository, merchantRepository)
+}
+
+export function getAllCashiersUseCase(): GetAllCashiersUseCase {
+  return new GetAllCashiersUseCase(cashierRepository)
 }
 
 export function getCashierByUuidUseCase(): GetCashierByUuidUseCase {

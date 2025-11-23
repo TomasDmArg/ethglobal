@@ -4,4 +4,5 @@ export interface CashierRepository {
   create(cashier: Cashier): Promise<Cashier>
   findByUuid(uuid: string): Promise<Cashier | null>
   findByMerchantId(merchantId: string): Promise<Cashier[]>
+  getAll(): Promise<Cashier[]>
 }

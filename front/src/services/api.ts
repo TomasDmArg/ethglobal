@@ -19,6 +19,8 @@ export async function getMerchants() {
 export interface RegisterMerchantRequest {
   email: string
   password: string
+  uuid?: string
+  merchantId?: string
   business_name: string
   wallets: Array<{
     network: string
@@ -29,6 +31,8 @@ export interface RegisterMerchantRequest {
 
 export interface Merchant {
   _id?: string
+  uuid?: string
+  merchantId?: string
   email: string
   business_name: string
   wallets: Array<{

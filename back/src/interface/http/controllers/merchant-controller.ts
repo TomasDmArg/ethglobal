@@ -2,7 +2,8 @@ import type { Request, Response } from "express"
 import {
   getMerchantByAddressUseCase,
   getMerchantByEmailUseCase,
-  registerMerchantUseCase
+  registerMerchantUseCase,
+  getMerchantsUseCase
 } from "../../../factories/use-case-factory"
 
 interface ErrorResponse {
@@ -63,6 +64,20 @@ export async function getMerchantByAddress(
     }
 
     res.json(merchant)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    res.status(500).json({ error: message })
+  }
+}
+
+export async function getMerchants(
+  req: Request,
+  res: Response<ErrorResponse | unknown>
+): Promise<void> {
+  try {
+    const useCase = getMerchantsUseCase()
+    const merchants = await useCase.execute()
+    res.json(merchants)
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error"
     res.status(500).json({ error: message })

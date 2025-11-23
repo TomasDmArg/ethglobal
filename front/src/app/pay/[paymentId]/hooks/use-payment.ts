@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import type { PaymentDetails } from "../types"
+import { getPaymentsByMerchantId } from "@/services/payment"
+import { Payment } from "@/services/api"
 
 export function usePayment(paymentId: string) {
   const [payment, setPayment] = useState<PaymentDetails | null>(null)
@@ -11,21 +13,37 @@ export function usePayment(paymentId: string) {
       setLoading(true)
       setError(null)
 
-      const res = await fetch(`/api/payment?payment_id=${paymentId}`)
+      // Fetch list of payments for this "merchant" (actually passes cashierId as paymentId param)
+      const data = await getPaymentsByMerchantId(paymentId);
+      
+      // Expect data to be Payment[]. Find payment that matches the provided paymentId as "id"
+      const paymentsCollection: Payment[] = Array.isArray(data) ? data : [];
 
-      if (!res.ok) {
-        throw new Error("Payment not found")
+      if (!paymentsCollection) {
+        throw new Error("Payment not found");
       }
 
-      const data = await res.json()
+      console.log("M:", paymentsCollection)
 
-      if (Array.isArray(data) && data.length > 0) {
-        setPayment(data[0])
-      } else if (data.payment_id) {
-        setPayment(data)
-      } else {
-        throw new Error("Invalid payment data")
+      // Filter payments, and get the latest payment
+      // Fix: parse createdAt as string to Date before sorting
+      const latestPayment = paymentsCollection
+        .sort(
+          (a: Payment, b: Payment) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+      
+      // Map backend Payment to PaymentDetails
+      const paymentDetails: PaymentDetails = {
+        payment_id: latestPayment.id,
+        merchant_id: latestPayment.merchantId,
+        amount_usd: latestPayment.amount,
+        status: latestPayment.status as "pending" | "confirmed",
+        qr_url: typeof window !== "undefined" ? `${window.location.origin}/pay/${latestPayment.id}` : ""
       }
+      console.log("M:", paymentDetails)
+
+      setPayment(paymentDetails)
     } catch (err) {
       console.error("Error fetching payment:", err)
       setError(err instanceof Error ? err.message : "Failed to load payment")

@@ -1,3 +1,4 @@
+import { getPaymentsByMerchantId } from "@/services/payment"
 import { type NextRequest, NextResponse } from "next/server"
 
 type PaymentRecord = {
@@ -35,34 +36,38 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ payment_id, qr_url, status: "pending" })
 }
 
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url)
-  const id = url.searchParams.get("payment_id") ?? ""
-  const merchantId = url.searchParams.get("merchant_id") ?? ""
 
-  // If merchant_id is provided, return all payments for that merchant
-  if (merchantId) {
-    const merchantPayments = Array.from(payments.values()).filter(
-      (p) => p.merchant_id === merchantId
-    )
-    // Sort by payment_id (most recent first, assuming newer IDs come later)
-    merchantPayments.sort((a, b) => b.payment_id.localeCompare(a.payment_id))
-    return NextResponse.json(merchantPayments)
-  }
-
-  if (id.startsWith("merchant-")) {
-    const merchantId = id.replace("merchant-", "")
-    return NextResponse.json({
+/**
+ * Get latest merchant cashier payment order. Payment ID is the cashier ID.
+ * 
+ * return NextResponse.json({
       payment_id: id,
       merchant_id: merchantId,
       amount_usd: 0,
       status: "pending",
-      qr_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/dashboard`
+      qr_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/pay/${payment_id}`
     })
-  }
+ */
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url)
+  const id = url.searchParams.get("payment_id") ?? ""
 
-  const record = payments.get(id)
-  if (!record) return new NextResponse("Not found", { status: 404 })
+  if (!id) return new NextResponse("Payment ID is required", { status: 400 })
 
-  return NextResponse.json(record)
+  const cashierOrders = await getPaymentsByMerchantId(id);
+  
+  // Sort cashier orders by createdAt descending
+  cashierOrders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
+  const record = cashierOrders[0]
+  if (!record) return new NextResponse("Payment not found", { status: 404 })
+
+  // Return the latest cashier order
+  return NextResponse.json({
+    payment_id: record.id,
+    merchant_id: record.merchantId,
+    amount_usd: record.amount,
+    status: record.status,
+    qr_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/pay/${record.id}`
+  })
 }
