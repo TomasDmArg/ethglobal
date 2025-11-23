@@ -31,7 +31,7 @@ export function PaymentAmount({ amount, paymentId, variants }: PaymentAmountProp
         animate={{ scale: 1 }}
         transition={{ type: "spring" as const, stiffness: 200, damping: 15 }}
       >
-        {isARS ? "$" : "ARS"} {(isARS ? amount * dollarPrice : amount).toFixed(2)}
+        {isARS ? "ARS" : "USD"} {(isARS ? amount * dollarPrice : amount).toFixed(2)}
       </motion.h1>
       <motion.p className="text-lg md:text-xl text-foreground/70 font-base" variants={variants}>
         Payment ID: {paymentId}
