@@ -60,16 +60,9 @@ export const PaymentFormOverlay = memo(function PaymentFormOverlay({
     }
   }, [open])
 
-  // Load cashiers when dialog opens - usar los del contexto o refrescarlos si es necesario
   useEffect(() => {
     if (!open) return
-    if (!walletAddress) {
-      console.warn(
-        "[PaymentFormOverlay] ⚠️ No hay walletAddress disponible cuando se abrió el diálogo"
-      )
-      setError("Dirección de wallet no disponible. Por favor, verifica tu conexión.")
-      return
-    }
+   
     if (cashiers.length === 0) {
       refreshCashiers().catch((err) => {
         setError("error loading cashiers")
@@ -127,7 +120,6 @@ export const PaymentFormOverlay = memo(function PaymentFormOverlay({
       setLoading(true)
       setError(null)
 
-      // Crear pago en el backend
       try {
         await createPayment({
           cashierId: selectedCashierId,
