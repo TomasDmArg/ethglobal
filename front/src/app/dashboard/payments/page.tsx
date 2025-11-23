@@ -17,6 +17,7 @@ import { useMerchantVerification } from "@/hooks/use-merchant-verification"
 import { cn } from "@/lib/utils"
 import type { Payment } from "@/services/api"
 import { PaymentFormOverlay } from "./payment-form-overlay"
+import { useMerchant } from "@/contexts/merchant-context"
 
 interface PaymentRecord {
   id: string
@@ -66,13 +67,27 @@ const StatusBadge = memo(({ status }: { status: PaymentRecord["status"] }) => {
 })
 StatusBadge.displayName = "StatusBadge"
 
+const CashierBadge = memo(({ cashierName }: { cashierName: string }) => {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+      {cashierName}
+    </span>
+  )
+})
+CashierBadge.displayName = "CashierBadge"
+
 // Memoized table row component
-const PaymentRow = memo(({ payment }: { payment: PaymentRecord }) => {
+const PaymentRow = memo(({ payment, cashierName }: { payment: PaymentRecord, cashierName: string }) => {
+  const router = useRouter()
+
+  /**
+   * Handle view payment, redirect to cashier's payment page
+   */
   const handleViewPayment = useCallback(() => {
     if (payment.id) {
-      window.open(payment.id, "_blank", "noopener,noreferrer")
+      router.push(`/pay/${payment.cashier_id}`)
     }
-  }, [payment.id])
+  }, [payment.cashier_id, router])
 
   const formatDate = useCallback((date: Date | string) => {
     const d = typeof date === "string" ? new Date(date) : date
@@ -89,6 +104,9 @@ const PaymentRow = memo(({ payment }: { payment: PaymentRecord }) => {
     <TableRow className="bg-background hover:bg-secondary-background border-b border-border">
       <TableCell className="font-medium text-foreground font-mono text-sm">{payment.id}</TableCell>
       <TableCell className="text-foreground">${payment.amount_usd.toFixed(2)}</TableCell>
+      <TableCell className="text-foreground">
+        <CashierBadge cashierName={cashierName} />
+      </TableCell>
       <TableCell className="text-foreground">
         <StatusBadge status={payment.status} />
       </TableCell>
@@ -109,12 +127,18 @@ function PaymentsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { payments: paymentsFromHook, walletAddress, isVerifying } = useMerchantVerification()
+  const { cashiers } = useMerchant()
   const [payments, setPayments] = useState<PaymentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Check if form should be open from URL params
   const isFormOpen = useMemo(() => searchParams.get("create") === "true", [searchParams])
+
+  const getCashierNameFromID = useCallback((cashierId: string) => {
+    const cashier = cashiers.find((c) => c.uuid === cashierId)
+    return cashier?.name ?? "Default Cashier"
+  }, [cashiers])
 
   // Convert payments from hook to PaymentRecord format
   useEffect(() => {
@@ -268,6 +292,7 @@ function PaymentsPageContent() {
                   <TableRow className="bg-secondary-background hover:bg-secondary-background">
                     <TableHead className="text-foreground">Payment ID</TableHead>
                     <TableHead className="text-foreground">Amount</TableHead>
+                    <TableHead className="text-foreground">Cashier</TableHead>
                     <TableHead className="text-foreground">Status</TableHead>
                     <TableHead className="text-foreground">Date</TableHead>
                     <TableHead className="text-foreground">Actions</TableHead>
@@ -275,7 +300,7 @@ function PaymentsPageContent() {
                 </TableHeader>
                 <TableBody>
                   {payments.map((payment) => (
-                    <PaymentRow key={payment.id} payment={payment} />
+                    <PaymentRow key={payment.id} payment={payment} cashierName={getCashierNameFromID(payment.cashier_id)} />
                   ))}
                 </TableBody>
               </Table>
