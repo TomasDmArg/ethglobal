@@ -24,7 +24,7 @@ interface UseMerchantVerificationResult {
 }
 
 export function useMerchantVerification(): UseMerchantVerificationResult {
-  const { primaryWallet, user, isAuthenticated, isAuthLoading } = useDynamicContext()
+  const { primaryWallet, isAuthenticated, isAuthLoading } = useDynamicContext()
   const merchantContext = useMerchant()
   const [isVerifying, setIsVerifying] = useState(false)
   const [merchantVerified, setMerchantVerified] = useState(false)
@@ -129,7 +129,6 @@ export function useMerchantVerification(): UseMerchantVerificationResult {
         }
 
         const userEmail =
-          user?.email ||
           (primaryWallet as { user?: { email?: string } }).user?.email ||
           `wallet_${currentAddress.slice(2, 10)}@payanywhere.local`
         console.log("email to verify", userEmail)
@@ -210,7 +209,6 @@ export function useMerchantVerification(): UseMerchantVerificationResult {
     isAuthenticated,
     isAuthLoading,
     primaryWallet?.address,
-    user,
     merchantContext.setMerchant,
     merchantContext.setPayments,
     merchantContext.setWalletAddress,
